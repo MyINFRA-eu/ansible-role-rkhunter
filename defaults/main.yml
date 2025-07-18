@@ -1,7 +1,7 @@
 ---
 #####
 #
-# @name MyINFRA.eu ~ Ansible <name> Role
+# @name MyINFRA.eu ~ Ansible RKHunter Role
 # @version 2025.07-001
 # @since 2025.07-001
 #
@@ -11,6 +11,9 @@
 #
 ###
 #
-# Ansible defaults for <name>
+# Ansible defaults for rkhunter
 #
 #####
+
+### Install & Run rkhunter
+rkhunter: true
