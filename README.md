@@ -66,14 +66,35 @@ None.
 
 Available variables are listed below, along with default values (see `defaults/main.yml`):
 
-### rkhunter
+### install
 
 Install rkhunter and run rkhunter
 
 > value needs to be a boolean (true|false)
 
+```yml
+rkhunter
+  install: true
 ```
-rkhunter: true
+
+### cron
+
+Install crontab script to be run every day
+
+> value needs to be a boolean (true|false)
+
+```yml
+rkhunter
+  cron: true
+```
+
+### path
+
+Define a custom path for your config files if you don't want to use your default ones.
+
+```yml
+rkhunter
+  path: "/opt/custom/storage"
 ```
 
 

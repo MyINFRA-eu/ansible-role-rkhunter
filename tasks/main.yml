@@ -1,7 +1,7 @@
 ---
 #####
 #
-# @name MyINFRA.eu ~ Ansible <name> Role
+# @name MyINFRA.eu ~ Ansible RKHunter Role
 # @version 2025.07-001
 # @since 2025.07-001
 #
@@ -11,20 +11,106 @@
 #
 ###
 #
-# Ansible role for <description>
+# Ansible role to install and manage rkhunter.
 #
 #####
 
 - name: "Copyright & Version information"
   ansible.builtin.debug:
     msg:
-      - "MyINFRA.eu ~ Ansible <name> Role"
-      - "Version   : 2025.07-001"
+      - "MyINFRA.eu ~ Ansible RKHunter Role"
+      - "Version   :  {{ myinfra.rkhunter.version }}"
       - "Copyright : (c) 2025 (and beyond) - Dennis de Houx, All In One, One For The code"
       - "Author    : Dennis de Houx <dennis@dehoux.be>"
       - "License   : https://creativecommons.org/licenses/by-nc-nd/4.0/deed.en CC BY-NC-ND 4.0"
 
-- name: "Load: Gather facts tasks"
-  ansible.builtin.import_tasks: gather.yml
+- name: "RKHUNTER > Install package"
+  ansible.builtin.apt:
+    name: "rkhunter"
+    state: "{{ packages.state | default('latest') }}"
+    update_cache: "{{ packages.cache.update | default(true) }}"
+    cache_valid_time: "{{ packages.cache.time | default(3600) }}"
+    install_recommends: "{{ packages.recommends | default(false) }}"
+  become: true
+  when:
+    - ansible_facts['os_family'] == "Debian"
+    - rkhunter.install is defined and rkhunter.install is true
   tags:
-    - <short_name>_gather_facts
+    - rkhunter_install
+
+- name: "RKHUNTER > Remove package"
+  ansible.builtin.apt:
+    name: "rkhunter"
+    state: absent
+    autoremove: "{{ packages.autoremove | default(false) }}"
+    fail_on_autoremove: true
+    update_cache: "{{ packages.cache.update | default(true) }}"
+    cache_valid_time: "{{ packages.cache.time | default(3600) }}"
+  become: true
+  when:
+    - ansible_facts['os_family'] == "Debian"
+    - rkhunter.install is not defined or rkhunter.install is false
+  tags:
+    - rkhunter_remove
+
+- name: "RKHUNTER > Create/Manage config file"
+  ansible.builtin.copy:
+    src: "{{ src_file }}"
+    dest: /etc/rkhunter
+    owner: root
+    group: root
+    mode: "0640"
+    backup: true
+  vars:
+    src_file: "{{ rkhunter.path | default('files') + '/rkhunter.conf' }}"
+  when:
+    - ansible_facts['os_family'] == "Debian"
+    - rkhunter.install is defined and rkhunter.install is true
+  tags:
+    - rkhunter_config
+
+- name: "RKHUNTER > Create/Manage cron config"
+  ansible.builtin.copy:
+    src: "{{ src_file }}"
+    dest: /etc/crond.d/rkhunter
+    owner: root
+    group: root
+    mode: "0644"
+    backup: true
+  vars:
+    src_file: "{{ rkhunter.path | default('files') + '/rkhunter.cron' }}"
+  when:
+    - ansible_facts['os_family'] == "Debian"
+    - rkhunter.cron is defined and rkhunter.cron is true
+  tags:
+    - rkhunter_config
+
+- name: "RKHUNTER > Update databases"
+  ansible.builtin.command:
+    cmd: rkhunter
+    argv:
+      - --update
+      - --skip-keypress
+    chdir: "/root"
+  register: rkhunter_update_output
+  become: true
+  when:
+    - ansible_facts['os_family'] == "Debian"
+    - rkhunter.install is defined and rkhunter.install is true
+  tags:
+    - rkhunter_update
+
+- name: "RKHUNTER > Run system check"
+  ansible.builtin.command:
+    cmd: rkhunter
+    argv:
+      - --check
+      - --skip-keypress
+    chdir: "/root"
+  register: rkhunter_check_output
+  become: true
+  when:
+    - ansible_facts['os_family'] == "Debian"
+    - rkhunter.install is defined and rkhunter.install is true
+  tags:
+    - rkhunter_check

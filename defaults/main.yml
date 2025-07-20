@@ -15,5 +15,9 @@
 #
 #####
 
-### Install & Run rkhunter
-rkhunter: true
+rkhunter:
+  ### Install & Run rkhunter
+  install: true
+
+  ### Setup crontab
+  cron: true
